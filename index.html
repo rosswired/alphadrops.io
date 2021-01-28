@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>alphadrop.io</title>
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css"
+        integrity="sha512-+4zCK9k+qNFUR5X+cKL9EIR+ZOhtIloNl9GIKS57V1MyNsYpYcUrUeQc9vNfzsWfV28IaLL3i96P9sdNyeRssA=="
+        crossorigin="anonymous" />
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="app-title">
+                <h1>alphadrop.io</h1>
+                <p>The dark web for startup ideas</p>
+            </div>
+            <div class="app-search">
+                <form id="form">
+                    <input type="text" id="search" class="search" placeholder="Search for alpha..." />
+            </div>
+        </div>
+        <div id="main">
+
+
+        </div>
+        <div class="footer">
+
+        </div>
+    </div>
+    <script src="app.js"></script>
+    <script src="airtable.js"></script>
+    <script>
+        var playButton = document.getElementById("play_btn");
+        const main = document.getElementById("main")
+        var Airtable = require('airtable');
+        var base = new Airtable({ apiKey: 'keyMTxBVT15DDC51r' }).base('appevNZIZPMW97c9R');
+        var i = 0
+
+
+        main.addEventListener("click", buttonCheck, false)
+
+        function buttonCheck(e) {
+            if (e.target !== e.currentTarget) {
+                var clickedButton = e.target.id
+                var checkString = "stateicon"
+                if (clickedButton.substring(0, 9) === checkString) {
+                    aud_play_pause(clickedButton)
+                } else {
+                    console.log("The target was not a button, click ignored")
+                }
+                e.stopPropagation()
+            }
+        }
+
+
+        function aud_play_pause(button) {
+            var digit = button.charAt(button.length - 1)
+            var ideaID = "idea_audio" + digit
+            var ideaAudio = document.getElementById(ideaID);
+            var stateIcon = document.getElementById(button)
+            console.log("got element")
+            if (ideaAudio.paused) {
+                console.log(ideaID + " " + "is playing")
+                stateIcon.classList.remove('fa', 'fa-play-circle', 'fa-2x');
+                stateIcon.classList.add('fa', 'fa-pause-circle', 'fa-2x');
+                ideaAudio.play();
+            } else {
+                console.log(ideaID + " " + "is paused")
+                stateIcon.classList.remove('fa', 'fa-pause-circle', 'fa-2x');
+                stateIcon.classList.add('fa', 'fa-play-circle', 'fa-2x');
+                ideaAudio.pause();
+            }
+        }
+
+        base('idea').select({
+            // Selecting the first 3 records in Grid:
+            maxRecords: 3,
+            view: "Grid"
+        }).eachPage(function page(records, fetchNextPage) {
+            console.log(records)
+            // This function (`page`) will get called for each page of records.
+
+            const displayIdeas = records.map(function (record) {
+                console.log(record.get('Audio'))
+                i++
+                return `
+                <div class="idea">    
+                <div class="idea-info">
+                <div>
+                <p>Alpha Drop #${i}</p>
+                </div>
+                <div class="audio_button_parent">
+                <button id="stateicon${+ i}" class="play_btn fa fa-play-circle fa-2x"></button>
+                </div>
+                </div>
+                <div class="idea-img">
+                <img src="${record.get('Avatar')[0].url}"></img>
+                </div>
+                <div class="idea-title">
+                <h3>${record.get('Title')}</h3>
+                </div> 
+                <audio id="idea_audio${+ i}"
+                control>
+                    <source src="${record.get('Audio')}"</source>
+                </audio>
+                <div id="detail" class="idea-detail">
+                    <h3>The Idea</h3>
+                    <p>${record.get('Description')}</p>
+                </div>
+                <div class="source-container">
+                <div class="source">
+                <p>${record.get('Source')} #${record.get('Episode')}</p>
+                </div>
+                <div class="spotify-btn">
+                <i class="fab fa-spotify fa-2x"></i>
+                </div>
+                <div class="like-btn">
+                    <i class="far fa-thumbs-up"></i>
+                
+                </div>
+                <div class="twitter-btn">
+                    <i class="fab fa-twitter fa-2x"></i>
+                </div>
+                </div>
+                </div>
+                `
+            }).join('')
+            main.innerHTML = displayIdeas
+
+            // To fetch the next page of records, call `fetchNextPage`.
+            // If there are more records, `page` will get called again.
+            // If there are no more records, `done` will get called.
+            fetchNextPage();
+
+        }, function done(err) {
+            if (err) { console.error(err); return; }
+        });
+    </script>
+</body>
+
+</html>
